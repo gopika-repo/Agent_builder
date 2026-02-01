@@ -1,0 +1,39 @@
+/* App Layout */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  padding: var(--spacing-6);
+  padding-top: calc(60px + var(--spacing-6));
+}
+
+/* No Document State */
+.no-document {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  animation: fadeIn var(--transition-slow);
+}
+
+.no-document-icon {
+  font-size: 64px;
+  margin-bottom: var(--spacing-6);
+  filter: grayscale(0.5);
+}
+
+.no-document h2 {
+  margin-bottom: var(--spacing-2);
+  color: var(--color-text-primary);
+}
+
+.no-document p {
+  margin-bottom: var(--spacing-6);
+  color: var(--color-text-secondary);
+}

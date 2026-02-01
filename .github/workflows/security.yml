@@ -1,0 +1,105 @@
+# Dependency Security Scanning
+# Runs on schedule and on dependency changes
+
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly on Mondays
+  push:
+    paths:
+      - '**/requirements.txt'
+      - '**/package.json'
+      - '**/package-lock.json'
+  pull_request:
+    paths:
+      - '**/requirements.txt'
+      - '**/package.json'
+
+jobs:
+  # ============================================
+  # Python Dependency Scan
+  # ============================================
+  python-security:
+    name: Python Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install safety
+        run: pip install safety
+      
+      - name: Run safety check
+        working-directory: ./backend
+        run: |
+          safety check -r requirements.txt --output json > safety-report.json || true
+          cat safety-report.json
+      
+      - name: Upload safety report
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-security-report
+          path: backend/safety-report.json
+
+  # ============================================
+  # Node.js Dependency Scan
+  # ============================================
+  node-security:
+    name: Node.js Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Run npm audit
+        working-directory: ./frontend
+        run: |
+          npm audit --json > npm-audit.json || true
+          cat npm-audit.json
+      
+      - name: Upload npm audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-security-report
+          path: frontend/npm-audit.json
+
+  # ============================================
+  # Container Security Scan
+  # ============================================
+  container-security:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Build backend image
+        run: |
+          docker build -t doc-intel-backend:scan -f docker/Dockerfile.backend .
+      
+      - name: Run Trivy scan on backend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'doc-intel-backend:scan'
+          format: 'sarif'
+          output: 'trivy-backend.sarif'
+      
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-backend.sarif'

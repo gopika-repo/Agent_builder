@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/build
+__pycache__
+*.pyc
+.git
+.env
+.venv
+venv
+.pytest_cache
+.coverage
+htmlcov
